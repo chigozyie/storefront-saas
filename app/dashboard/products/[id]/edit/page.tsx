@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { updateProduct } from "@/lib/products/actions";
+import ProductImageManager from "@/components/products/ProductImageManager";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -11,13 +13,14 @@ function koboToNairaString(kobo: number) {
   return String(kobo / 100);
 }
 
-export default async function EditProductPage({ params }: { params: { id: string } }) {
+export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const supabase = await createServerSupabaseClient();
 
   const { data: product, error } = await supabase
     .from("products")
     .select("id, store_id, name, description, price_kobo, stock_qty, is_active")
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (error || !product) {
@@ -28,12 +31,20 @@ export default async function EditProductPage({ params }: { params: { id: string
       </Card>
     );
   }
+  const { data: images } = await supabase
+    .from("product_images")
+    .select("id, image_url, sort_order")
+    .eq("product_id", product.id)
+    .order("sort_order", { ascending: true });
 
   const productId = product.id;
 
   async function onSave(formData: FormData) {
     "use server";
-    await updateProduct(productId, formData);
+    const result = await updateProduct(productId, formData);
+    if (result.ok) {
+      redirect("/dashboard/products");
+    }
   }
 
   return (
@@ -96,9 +107,7 @@ export default async function EditProductPage({ params }: { params: { id: string
             <CardTitle>Images</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Next step: we’ll add upload + preview here.
-            </p>
+            <ProductImageManager productId={product.id} initialImages={images ?? []} />
           </CardContent>
         </Card>
       </div>

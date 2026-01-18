@@ -43,7 +43,7 @@ export default async function ProductsPage() {
 
   const { data: products } = await supabase
     .from("products")
-    .select("id, name, price_kobo, stock_qty, is_active, created_at")
+    .select("id, name, price_kobo, stock_qty, is_active, created_at, product_images(image_url, sort_order)")
     .eq("store_id", store.id)
     .order("created_at", { ascending: false });
 
@@ -67,6 +67,7 @@ export default async function ProductsPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Image</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Price</TableHead>
                 <TableHead>Stock</TableHead>
@@ -76,8 +77,26 @@ export default async function ProductsPage() {
             </TableHeader>
             <TableBody>
               {products?.length ? (
-                products.map((p) => (
+                products.map((p) => {
+                  const firstImage =
+                    (p as any).product_images
+                      ?.sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))?.[0]
+                      ?.image_url ?? null;
+
+                  return (
                   <TableRow key={p.id}>
+                    <TableCell>
+                      <div className="h-10 w-10 overflow-hidden rounded-md border bg-muted">
+                        {firstImage ? (
+                          <img
+                            src={firstImage}
+                            alt=""
+                            className="h-full w-full object-cover"
+                            loading="lazy"
+                          />
+                        ) : null}
+                      </div>
+                    </TableCell>
                     <TableCell className="font-medium">{p.name}</TableCell>
                     <TableCell>{formatNaira(p.price_kobo)}</TableCell>
                     <TableCell>{p.stock_qty}</TableCell>
@@ -88,10 +107,11 @@ export default async function ProductsPage() {
                       </Button>
                     </TableCell>
                   </TableRow>
-                ))
+                  )
+                })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-muted-foreground">
+                  <TableCell colSpan={6} className="text-muted-foreground">
                     No products yet. Click “Add product”.
                   </TableCell>
                 </TableRow>

@@ -77,6 +77,10 @@ export default async function DashboardPage() {
               <Button asChild>
                 <Link href="/dashboard/products">Manage products</Link>
               </Button>
+              <Button variant="outline" asChild>
+                <Link href="/dashboard/orders">View orders</Link>
+              </Button>
+
             </div>
           </CardContent>
         </Card>
