@@ -3,6 +3,8 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import CancelOrderButton from "@/components/CancelOrderButton";
+import ReleaseExpiredButton from "@/components/ReleaseExpiredButton";
 
 function formatNaira(kobo: number) {
   return new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN" }).format(kobo / 100);
@@ -38,9 +40,12 @@ export default async function OrdersPage() {
             Latest orders for <span className="font-medium">{store.name}</span>
           </p>
         </div>
-        <Button asChild variant="outline">
-          <Link href={`/@${store.slug}`}>View storefront</Link>
-        </Button>
+        <div className="flex gap-2">
+          <ReleaseExpiredButton />
+          <Button asChild variant="outline">
+            <Link href={`/@${store.slug}`}>View storefront</Link>
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -56,6 +61,7 @@ export default async function OrdersPage() {
                 <TableHead>Status</TableHead>
                 <TableHead>Total</TableHead>
                 <TableHead>Contact</TableHead>
+                <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
 
@@ -66,18 +72,26 @@ export default async function OrdersPage() {
                     <TableCell className="text-sm text-muted-foreground">
                       {new Date(o.created_at).toLocaleString()}
                     </TableCell>
-                    <TableCell className="font-medium">{o.customer_name}</TableCell>
+                    <TableCell className="font-medium">
+                      <Link className="underline" href={`/dashboard/orders/${o.id}`}>
+                        {o.customer_name || "View order"}
+                      </Link>
+                    </TableCell>
                     <TableCell>{o.status}</TableCell>
                     <TableCell>{formatNaira(o.total_kobo)}</TableCell>
                     <TableCell className="text-sm">
                       {o.customer_phone ? <div>{o.customer_phone}</div> : null}
                       {o.customer_email ? <div className="text-muted-foreground">{o.customer_email}</div> : null}
                     </TableCell>
+
+                    <TableCell className="text-right">
+                      {o.status === "pending" ? <CancelOrderButton orderId={o.id} /> : "—"}
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-muted-foreground">
+                  <TableCell colSpan={6} className="text-muted-foreground">
                     No orders yet.
                   </TableCell>
                 </TableRow>

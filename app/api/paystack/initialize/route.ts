@@ -33,9 +33,7 @@ export async function POST(req: Request) {
     .single();
 
   if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
-  if (product.stock_qty < qty)
-    return NextResponse.json({ error: "Not enough stock" }, { status: 400 });
-
+  
   const { data: store } = await supabaseAdmin
     .from("stores")
     .select("id, name, paystack_subaccount_code")
@@ -59,6 +57,7 @@ export async function POST(req: Request) {
       customer_address,
       total_kobo: total,
       status: "pending",
+      reserved_until: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
     })
     .select("id")
     .single();
@@ -73,28 +72,44 @@ export async function POST(req: Request) {
     price_each_kobo: product.price_kobo,
   });
 
+  // Reserve stock atomically
+  const { error: reserveErr } = await supabaseAdmin.rpc("reserve_stock", {
+    p_product_id: product.id,
+    p_qty: qty,
+  });
+
+  if (reserveErr) {
+    // Mark order failed and stop
+    await supabaseAdmin.from("orders").update({ status: "failed" }).eq("id", order.id);
+    return NextResponse.json({ error: reserveErr.message }, { status: 400 });
+  }
+
   // 3) Initialize Paystack
-  const paystack = await paystackRequest<InitResponse>("/transaction/initialize", {
-    method: "POST",
-    json: {
-      email: customer_email,
-      amount: total,
-      reference: `order_${order.id}`,
-      subaccount: store.paystack_subaccount_code,
-      metadata: {
-        order_id: order.id,
+  try {
+    const paystack = await paystackRequest<InitResponse>("/transaction/initialize", {
+      method: "POST",
+      json: {
+        email: customer_email,
+        amount: total,
+        reference: `order_${order.id}`,
+        subaccount: store.paystack_subaccount_code,
+        metadata: { order_id: order.id },
+        callback_url: `${process.env.NEXT_PUBLIC_SITE_URL}/payment/callback`,
       },
-      callback_url: `${process.env.NEXT_PUBLIC_SITE_URL}/payment/callback`,
-    },
-  });
+    });
 
-  await supabaseAdmin
-    .from("orders")
-    .update({ paystack_reference: paystack.data.reference })
-    .eq("id", order.id);
+    // Save reference (nice)
+    await supabaseAdmin
+      .from("orders")
+      .update({ paystack_reference: paystack.data.reference })
+      .eq("id", order.id);
 
+    return NextResponse.json({ authorization_url: paystack.data.authorization_url });
+  } catch (e: any) {
+    // Release stock if payment init fails
+    await supabaseAdmin.rpc("release_stock", { p_product_id: product.id, p_qty: qty });
+    await supabaseAdmin.from("orders").update({ status: "failed" }).eq("id", order.id);
 
-  return NextResponse.json({
-    authorization_url: paystack.data.authorization_url,
-  });
+    return NextResponse.json({ error: e?.message ?? "Payment init failed" }, { status: 400 });
+  }
 }
