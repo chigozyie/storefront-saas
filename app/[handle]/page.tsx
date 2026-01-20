@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ShoppingCart } from "lucide-react";
 
 function normalizeHandle(handle?: string) {
   if (!handle) return null;
@@ -46,17 +47,30 @@ export default async function StorefrontPage({
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="mx-auto max-w-5xl px-4 py-6 space-y-1">
+      <header className=" border-b">
+        <div className="relative mx-auto max-w-5xl px-4 py-6 space-y-1">
           <h1 className="text-2xl font-semibold">{store.name}</h1>
           <p className="text-sm text-muted-foreground">@{store.slug}</p>
+
           {store.description ? (
             <p className="text-sm text-muted-foreground">{store.description}</p>
           ) : null}
+
           <div className="text-sm text-muted-foreground">
             {store.address ? <span>{store.address}</span> : null}
             {store.address && store.whatsapp ? <span> • </span> : null}
             {store.whatsapp ? <span>WhatsApp: {store.whatsapp}</span> : null}
+          </div>
+
+          <div className="absolute top-6 right-4">
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/@${store.slug}/cart`}
+                className="flex items-center gap-2"
+              >
+                <ShoppingCart className="h-4 w-4" />
+                <span className="sr-only">Cart</span>
+              </Link>
+            </Button>
           </div>
         </div>
       </header>

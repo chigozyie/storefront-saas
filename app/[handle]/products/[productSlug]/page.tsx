@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import AddToCartButton from "@/components/AddToCartButton";
 
 function normalizeHandle(handle?: string) {
   if (!handle) return null;
@@ -100,6 +101,7 @@ export default async function ProductDetailPage({
             </Card>
 
             <div className="flex gap-3">
+              <AddToCartButton storeSlug={store.slug} productId={product.id} />
                 <Button asChild>
                     <Link href={`/${handle}/checkout?product=${product.id}`}>Buy now</Link>
                 </Button>

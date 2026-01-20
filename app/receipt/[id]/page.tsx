@@ -4,6 +4,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import PrintButton from "@/components/PrintButton";
 
 function formatNaira(kobo: number) {
   return new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN" }).format(kobo / 100);
@@ -52,9 +53,12 @@ export default async function ReceiptPage({
             </p>
           </div>
 
-          <Button asChild variant="outline">
-            <Link href={`/@${store.slug}`}>Back to store</Link>
-          </Button>
+          <div className="flex gap-2">
+            <PrintButton />
+            <Button asChild variant="outline">
+              <Link href={`/@${store.slug}`}>Back to store</Link>
+            </Button>
+          </div>
         </div>
 
         <Card>
