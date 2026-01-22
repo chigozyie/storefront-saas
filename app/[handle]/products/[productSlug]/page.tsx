@@ -52,6 +52,8 @@ export default async function ProductDetailPage({
     .order("sort_order", { ascending: true });
 
   const mainImage = images?.[0]?.image_url ?? null;
+  const outOfStock = product.stock_qty <= 0;
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -101,11 +103,20 @@ export default async function ProductDetailPage({
             </Card>
 
             <div className="flex gap-3">
-              <AddToCartButton storeSlug={store.slug} productId={product.id} />
-                <Button asChild>
-                    <Link href={`/${handle}/checkout?product=${product.id}`}>Buy now</Link>
-                </Button>
+              {outOfStock && (
+                <div className="text-sm text-destructive font-medium">Out of stock</div>
+              )}
+              <AddToCartButton storeSlug={store.slug} productId={product.id} disabled={outOfStock} />
 
+              {outOfStock ? (
+                <Button disabled>
+                  Buy now
+                </Button>
+              ) : (
+                <Button asChild>
+                  <Link href={`/${handle}/checkout?product=${product.id}`}>Buy now</Link>
+                </Button>
+              )}
 
               <Button variant="outline" asChild>
                 <Link href={`/@${store.slug}`}>Continue shopping</Link>

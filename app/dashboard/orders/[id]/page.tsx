@@ -4,6 +4,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import OrderActions from "@/components/OrderActions";
 
 function formatNaira(kobo: number) {
   return new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN" }).format(kobo / 100);
@@ -33,7 +34,7 @@ export default async function OrderDetailsPage({
   const { data: order } = await supabase
     .from("orders")
     .select(
-      "id, status, total_kobo, customer_name, customer_phone, customer_email, customer_address, created_at, paid_at, paystack_reference, reserved_until"
+      "id, status, total_kobo, customer_name, customer_phone, customer_email, customer_address, created_at, paid_at, paystack_reference, reserved_until, completed_at, refunded_at"
     )
     .eq("id", id)
     .eq("store_id", store.id)
@@ -87,6 +88,10 @@ export default async function OrderDetailsPage({
             <CardTitle>Payment</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
+            <div className="pt-3">
+              <OrderActions orderId={order.id} currentStatus={order.status} />
+            </div>
+
             <div><span className="text-muted-foreground">Status:</span> {order.status}</div>
             <div><span className="text-muted-foreground">Total:</span> {formatNaira(order.total_kobo)}</div>
             <div><span className="text-muted-foreground">Created:</span> {new Date(order.created_at).toLocaleString()}</div>
@@ -94,6 +99,16 @@ export default async function OrderDetailsPage({
               <span className="text-muted-foreground">Paid:</span>{" "}
               {order.paid_at ? new Date(order.paid_at).toLocaleString() : "—"}
             </div>
+
+            <div>
+              <span className="text-muted-foreground">Completed:</span>{" "}
+              {order.completed_at ? new Date(order.completed_at).toLocaleString() : "—"}
+            </div>
+            <div>
+              <span className="text-muted-foreground">Refunded:</span>{" "}
+              {order.refunded_at ? new Date(order.refunded_at).toLocaleString() : "—"}
+            </div>
+
             <div>
               <span className="text-muted-foreground">Paystack ref:</span>{" "}
               {order.paystack_reference ? <span className="font-mono">{order.paystack_reference}</span> : "—"}

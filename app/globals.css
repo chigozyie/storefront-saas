@@ -123,3 +123,23 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ===== Receipt print styles ===== */
+@media print {
+  /* Hide buttons, navs, links, etc */
+  button,
+  a,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Clean white background for PDF */
+  body {
+    background: white !important;
+  }
+
+  /* Optional: tighten spacing */
+  * {
+    box-shadow: none !important;
+  }
+}

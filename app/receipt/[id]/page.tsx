@@ -53,7 +53,7 @@ export default async function ReceiptPage({
             </p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 no-print">
             <PrintButton />
             <Button asChild variant="outline">
               <Link href={`/@${store.slug}`}>Back to store</Link>

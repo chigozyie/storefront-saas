@@ -45,6 +45,8 @@ export default async function StorefrontPage({
     .eq("is_active", true)
     .order("created_at", { ascending: false });
 
+  const outOfStock = products?.[0]?.stock_qty <= 0;
+
   return (
     <div className="min-h-screen bg-background">
       <header className=" border-b">
@@ -88,6 +90,7 @@ export default async function StorefrontPage({
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {products.map((p: any) => {
+              const outOfStock = p.stock_qty <= 0;
               const firstImage =
                 p.product_images
                   ?.sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))?.[0]
@@ -109,15 +112,26 @@ export default async function StorefrontPage({
                   <CardHeader className="space-y-1">
                     <CardTitle className="text-base">{p.name}</CardTitle>
                     <p className="text-sm text-muted-foreground">{formatNaira(p.price_kobo)}</p>
-                    <p className="text-xs text-muted-foreground">
+                    {/* <p className="text-xs text-muted-foreground">
                       {p.stock_qty > 0 ? `${p.stock_qty} in stock` : "Out of stock"}
-                    </p>
+                    </p> */}
+                    {outOfStock ? (
+                      <div className="text-xs font-medium text-destructive">Out of stock</div>
+                    ) : (
+                      <div className="text-xs text-muted-foreground">{p.stock_qty} in stock</div>
+                    )}
                   </CardHeader>
 
                   <CardContent className="flex items-center justify-between">
-                    <Button asChild size="sm">
-                      <Link href={`/@${store.slug}/products/${p.slug}`}>View</Link>
-                    </Button>
+                    {outOfStock ? (
+                      <Button size="sm" disabled>
+                        View
+                      </Button>
+                    ) : (
+                      <Button asChild size="sm">
+                        <Link href={`/@${store.slug}/products/${p.slug}`}>View</Link>
+                      </Button>
+                    )}
 
                     {store.whatsapp ? (
                       <Button

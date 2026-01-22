@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import AutoDisableToggle from "@/components/AutoDisableToggle";
 
 function formatNaira(priceKobo: number) {
   const naira = priceKobo / 100;
@@ -43,7 +44,7 @@ export default async function ProductsPage() {
 
   const { data: products } = await supabase
     .from("products")
-    .select("id, name, price_kobo, stock_qty, is_active, created_at, product_images(image_url, sort_order)")
+    .select("id, name, price_kobo, stock_qty, is_active, auto_disable_on_oos, created_at, product_images(image_url, sort_order)")
     .eq("store_id", store.id)
     .order("created_at", { ascending: false });
 
@@ -72,6 +73,7 @@ export default async function ProductsPage() {
                 <TableHead>Price</TableHead>
                 <TableHead>Stock</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Auto-disable</TableHead>
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
@@ -101,6 +103,14 @@ export default async function ProductsPage() {
                     <TableCell>{formatNaira(p.price_kobo)}</TableCell>
                     <TableCell>{p.stock_qty}</TableCell>
                     <TableCell>{p.is_active ? "Active" : "Hidden"}</TableCell>
+
+                    <TableCell>
+                      <AutoDisableToggle
+                        productId={p.id}
+                        initial={(p as any).auto_disable_on_oos ?? false}
+                      />
+                    </TableCell>
+
                     <TableCell className="text-right">
                       <Button variant="outline" size="sm" asChild>
                         <Link href={`/dashboard/products/${p.id}/edit`}>Edit</Link>
@@ -111,7 +121,7 @@ export default async function ProductsPage() {
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-muted-foreground">
+                  <TableCell colSpan={7} className="text-muted-foreground">
                     No products yet. Click “Add product”.
                   </TableCell>
                 </TableRow>
